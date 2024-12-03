@@ -1,5 +1,4 @@
-#ifndef QUICKSORT_H
-#define QUICKSORT_H
+#pragma once
 
 #include <vector>
 #include <future>
@@ -11,4 +10,6 @@ void quicksort_parallel(int start, int end, std::vector<int>& arr, int max_depth
 // Declaration of partition function
 int partition(int start, int end, std::vector<int>& arr);
 
-#endif // QUICKSORT_H
+void generateRandomArray(std::vector<int>& arr, size_t size, int range);
+
+void printArray(const std::vector<int>& arr);

@@ -1,9 +1,7 @@
-#ifndef QUICKSORT_H
-#define QUICKSORT_H
-
 #include <vector>
 #include <future>
 #include <algorithm>
+#include <iostream>
 #include "QuickSort.h"
 
 
@@ -44,8 +42,6 @@ int partition(int start, int end, std::vector<int>& arr) {
     return j + 1;
 }
 
-// Function to implement parallel quicksort using OpenMP
-
 void quicksort_parallel(int start, int end, std::vector<int>& arr, int max_depth) {
     if (start >= end) {
         return;
@@ -74,4 +70,19 @@ void quicksort_parallel(int start, int end, std::vector<int>& arr, int max_depth
      }
 }
 
-#endif // QUICKSORT_H
+
+void generateRandomArray(std::vector<int>& arr, size_t size, int range) {
+    for (size_t i = 0; i < size; ++i) {
+        arr.push_back(rand() % range);
+    }
+}
+
+void printArray(const std::vector<int>& arr) {
+    std::cout << std::endl;
+    for (int num : arr) {
+        std::cout << num << " ";
+    }
+    std::cout << std::endl;
+    std::cout << std::endl;
+}
+

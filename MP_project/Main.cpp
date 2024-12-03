@@ -15,14 +15,14 @@ void runServer() {
 void runClient() {
     const std::string serverAddress = "127.0.0.1";
     const int serverPort = 8080;
-    const size_t arraySize = 10;
+    const size_t arraySize = 100;
     const int numThreads = 4;
-    const int range = 1000;
+    const int range = 100;
 
     std::this_thread::sleep_for(std::chrono::seconds(1)); // Allow server to start first
-    std::cout << "Starting client..." << std::endl;
+    std::cout << "Main: Starting client..." << std::endl;
     connectToServer(serverAddress, serverPort, arraySize, numThreads, range);
-    std::cout << "Client finished." << std::endl;
+    std::cout << "Main: Client finished." << std::endl;
 }
 
 int main() {

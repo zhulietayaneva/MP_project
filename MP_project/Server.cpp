@@ -8,9 +8,12 @@
 #include <vector>
 #include <string>
 
+
+
+
 // Function to handle a single client connection
 void handleClient(int clientSocket) {
-    std::cout << "Handling client..." << std::endl;
+    std::cout << "Server: Handling client..." << std::endl;
 
     // Send greeting to the client
   
@@ -21,7 +24,7 @@ void handleClient(int clientSocket) {
     // Process array size
     size_t size;
     if (recv(clientSocket, (char*)&size, sizeof(size), 0) <= 0) {
-        std::cerr << "Failed to receive array size: " << WSAGetLastError() << std::endl;
+        std::cerr << "Server: Failed to receive array size: " << WSAGetLastError() << std::endl;
         closesocket(clientSocket);
         return;
     }
@@ -30,33 +33,61 @@ void handleClient(int clientSocket) {
     // Process number of threads
     int numThreads;
     if (recv(clientSocket, (char*)&numThreads, sizeof(numThreads), 0) <= 0) {
-        std::cerr << "Failed to receive thread count: " << WSAGetLastError() << std::endl;
+        std::cerr << "Server: Failed to receive thread count: " << WSAGetLastError() << std::endl;
         closesocket(clientSocket);
         return;
     }
-    std::cout << "Number of threads received: " << numThreads << std::endl;
+    std::cout << "Server: Number of threads received: " << numThreads << std::endl;
+
+    // Process range
+    int range;
+    if (recv(clientSocket, (char*)&range, size * sizeof(range), 0) <= 0) {
+        std::cerr << "Server: Failed to receive range: " << WSAGetLastError() << std::endl;
+        closesocket(clientSocket);
+        return;
+    }
+    std::cout << "Server: Range recieved: "<<size<<"\n";
+
 
     // Process array data
-    std::vector<int> arr(size);
-    if (recv(clientSocket, (char*)arr.data(), size * sizeof(int), 0) <= 0) {
-        std::cerr << "Failed to receive array data: " << WSAGetLastError() << std::endl;
-        closesocket(clientSocket);
-        return;
-    }
-    std::cout << "Array received: "<<size<<" number of elements\n";
+    std::vector<int> arr;
    
+
+    // Generate a random array
+    
+    srand(static_cast<unsigned int>(time(0)));
+    generateRandomArray(arr, size, range);
+
+    std::cout << "Server: Generated array.\n";
+
+    if (size <= 100)    {
+        std::cout << "Server: Printing generated array..." << std::endl;
+        printArray(arr);
+    }
+
+   
+    auto start = std::chrono::high_resolution_clock::now();
+
+    int max_depth = numThreads;  // You can adjust the depth based on the number of threads
+    quicksort_parallel(0, size - 1, arr, max_depth);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> sorting_duration = end - start;
+    std::cout << "Server: The array was sorted in " << sorting_duration.count() << " seconds." << std::endl;
+    //printArray(arr);
+
 
     // Send the sorted array back to the client
     if (send(clientSocket, (char*)arr.data(), size * sizeof(int), 0) == SOCKET_ERROR) {
-        std::cerr << "Failed to send sorted array: " << WSAGetLastError() << std::endl;
+        std::cerr << "Server: Failed to send sorted array: " << WSAGetLastError() << std::endl;
         closesocket(clientSocket);
         return;
     }
-    std::cout << "Sorted array sent back to client." << std::endl;
+    std::cout << "Server: Sorted array sent back to client." << std::endl;
 
     // Close the client socket
     closesocket(clientSocket);
-    std::cout << "Client connection closed." << std::endl;
+    std::cout << "Server: Client connection closed." << std::endl;
 }
 
 // Function to start the server
@@ -65,14 +96,14 @@ void startServer(const std::string& address, int port) {
     WSADATA wsaData;
     int wsaStartup = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (wsaStartup != 0) {
-        std::cerr << "WSAStartup failed with error: " << wsaStartup << std::endl;
+        std::cerr << "Server: WSAStartup failed with error: " << wsaStartup << std::endl;
         return;
     }
 
     // Create a socket to listen for incoming connections
     SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (serverSocket == INVALID_SOCKET) {
-        std::cerr << "Socket creation failed with error: " << WSAGetLastError() << std::endl;
+        std::cerr << "Server: Socket creation failed with error: " << WSAGetLastError() << std::endl;
         WSACleanup();
         return;
     }
@@ -85,7 +116,7 @@ void startServer(const std::string& address, int port) {
 
     // Bind the socket to the address and port
     if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-        std::cerr << "Bind failed with error: " << WSAGetLastError() << std::endl;
+        std::cerr << "Server: Bind failed with error: " << WSAGetLastError() << std::endl;
         closesocket(serverSocket);
         WSACleanup();
         return;
@@ -93,31 +124,31 @@ void startServer(const std::string& address, int port) {
 
     // Listen for incoming connections (maximum of 5 queued connections)
     if (listen(serverSocket, 5) == SOCKET_ERROR) {
-        std::cerr << "Listen failed with error: " << WSAGetLastError() << std::endl;
+        std::cerr << "Server: Listen failed with error: " << WSAGetLastError() << std::endl;
         closesocket(serverSocket);
         WSACleanup();
         return;
     }
 
-    std::cout << "Server is listening on " << address << ":" << port << std::endl;
+    std::cout << "Server: Server is listening on " << address << ":" << port << std::endl;
 
     while (true) {
         // Accept incoming client connections
         SOCKET clientSocket = accept(serverSocket, NULL, NULL);
         if (clientSocket == INVALID_SOCKET) {
-            std::cerr << "Accept failed with error: " << WSAGetLastError() << std::endl;
+            std::cerr << "Server: Accept failed with error: " << WSAGetLastError() << std::endl;
             closesocket(serverSocket);
             WSACleanup();
             return;
         }
 
-        std::cout << "Client connected." << std::endl;
+        std::cout << "Server: Client connected." << std::endl;
 
         // Handle the client
         handleClient(clientSocket);
 
         // After handling the client, we can break or return from the loop
-        std::cout << "Client disconnected or request handled. Closing connection." << std::endl;
+        std::cout << "Server: Client disconnected or request handled. Closing connection." << std::endl;
 
         // Close the client socket after finishing the interaction
         closesocket(clientSocket);
